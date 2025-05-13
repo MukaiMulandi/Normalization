@@ -1,0 +1,57 @@
+CREATE TABLE ProductDetail (
+    OrderID INT,
+    CustomerName VARCHAR(100),
+    Products VARCHAR(255)
+);
+
+INSERT INTO ProductDetail (OrderID, CustomerName, Products)
+VALUES 
+    (101, 'John Doe', 'Laptop, Mouse'),
+    (102, 'Jane Smith', 'Tablet, Keyboard, Mouse'),
+    (103, 'Emily Clark', 'Phone');
+
+SELECT 
+    OrderID,
+    CustomerName,
+    TRIM(value) AS Product,
+    1 AS Quantity
+INTO 
+    OrderDetails_1NF
+FROM 
+    ProductDetail
+CROSS APPLY 
+    STRING_SPLIT(Products, ',');
+
+UPDATE OrderDetails_1NF SET Quantity = 2 WHERE OrderID = 101 AND Product = 'Laptop';
+UPDATE OrderDetails_1NF SET Quantity = 1 WHERE OrderID = 101 AND Product = 'Mouse';
+UPDATE OrderDetails_1NF SET Quantity = 3 WHERE OrderID = 102 AND Product = 'Tablet';
+UPDATE OrderDetails_1NF SET Quantity = 1 WHERE OrderID = 102 AND Product = 'Keyboard';
+UPDATE OrderDetails_1NF SET Quantity = 2 WHERE OrderID = 102 AND Product = 'Mouse';
+UPDATE OrderDetails_1NF SET Quantity = 1 WHERE OrderID = 103 AND Product = 'Phone';
+
+CREATE TABLE Orders (
+    OrderID INT PRIMARY KEY,
+    CustomerName VARCHAR(100)
+);
+
+CREATE TABLE OrderItems (
+    OrderID INT,
+    Product VARCHAR(50),
+    Quantity INT,
+    PRIMARY KEY (OrderID, Product),
+    FOREIGN KEY (OrderID) REFERENCES Orders(OrderID)
+);
+
+INSERT INTO Orders (OrderID, CustomerName)
+SELECT DISTINCT OrderID, CustomerName
+FROM OrderDetails_1NF;
+
+INSERT INTO OrderItems (OrderID, Product, Quantity)
+SELECT OrderID, Product, Quantity
+FROM OrderDetails_1NF;
+
+SELECT 'Orders Table' AS TableName;
+SELECT * FROM Orders;
+
+SELECT 'OrderItems Table' AS TableName;
+SELECT * FROM OrderItems;
